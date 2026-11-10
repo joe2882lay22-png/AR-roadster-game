@@ -27,10 +27,7 @@ jobs:
       - name: Android SDK ပြင်ဆင်ခြင်း
         uses: android-actions/setup-android@v3
         with:
-          packages: |
-            platform-tools
-            platforms;android-34
-            build-tools;34.0.0
+          packages: "platform-tools platforms;android-34 build-tools;34.0.0"
 
       - name: Gradle 8.7 ပြင်ဆင်ခြင်း
         uses: gradle/actions/setup-gradle@v4
