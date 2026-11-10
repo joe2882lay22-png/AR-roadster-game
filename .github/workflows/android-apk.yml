@@ -6,25 +6,43 @@ on:
     branches:
       - main
 
+env:
+  GODOT_VERSION: "4.3"
+
 jobs:
   build-apk:
     name: APK တည်ဆောက်ခြင်း
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
-      image: barichello/godot-ci:4.3-stable
+      image: barichello/godot-ci:4.3
+
     steps:
       - name: Repository ကိုရယူခြင်း
         uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Godot export template ပြင်ဆင်ခြင်း
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates/
+          mkdir -p ~/.config/
+          mv /root/.config/godot ~/.config/godot
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable \
+            ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
 
       - name: Android APK တည်ဆောက်ခြင်း
         run: |
-          mkdir -p build
-          godot --headless --path . --export-debug "Android" build/AR-Roadster.apk
+          mkdir -p build/android
+          EXPORT_DIR="$(readlink -f build)"
+          godot --headless --verbose --import \
+            --install-android-build-template \
+            --export-debug "Android" \
+            "$EXPORT_DIR/android/AR-Roadster.apk"
 
-      - name: APK ကို artifact အဖြစ်တင်ခြင်း
+      - name: APK တင်ခြင်း
         uses: actions/upload-artifact@v4
         with:
           name: AR-Roadster-APK
-          path: build/AR-Roadster.apk
+          path: build/android/AR-Roadster.apk
           if-no-files-found: error
           retention-days: 14
