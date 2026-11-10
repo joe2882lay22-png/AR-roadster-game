@@ -6,9 +6,6 @@ on:
     branches:
       - main
 
-env:
-  GODOT_VERSION: "4.3"
-
 jobs:
   build-apk:
     name: APK တည်ဆောက်ခြင်း
@@ -16,28 +13,56 @@ jobs:
     container:
       image: barichello/godot-ci:4.3
 
+    env:
+      GODOT_VERSION: "4.3"
+      ANDROID_HOME: /usr/lib/android-sdk
+      ANDROID_SDK_ROOT: /usr/lib/android-sdk
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+
     steps:
       - name: Repository ကိုရယူခြင်း
         uses: actions/checkout@v4
         with:
           lfs: true
 
-      - name: Godot export template ပြင်ဆင်ခြင်း
+      - name: Godot Android export тохиргоог бэлтгэх
         run: |
-          mkdir -p ~/.local/share/godot/export_templates/
-          mkdir -p ~/.config/
-          mv /root/.config/godot ~/.config/godot
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable \
-            ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$HOME/.config/godot"
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
+
+          if [ -d /root/.config/godot ]; then
+            cp -a /root/.config/godot/. "$HOME/.config/godot/"
+          fi
+
+          if [ -d /root/.local/share/godot/export_templates/4.3.stable ]; then
+            cp -a /root/.local/share/godot/export_templates/4.3.stable/. \
+              "$HOME/.local/share/godot/export_templates/4.3.stable/"
+          fi
+
+          cat > "$HOME/.config/godot/editor_settings-4.3.tres" <<'EOF'
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"
+          export/android/android_sdk_path = "/usr/lib/android-sdk"
+          export/android/debug_keystore = "/root/debug.keystore"
+          export/android/debug_keystore_user = "androiddebugkey"
+          export/android/debug_keystore_pass = "android"
+          EOF
+
+          test -f /root/debug.keystore
+          test -d /usr/lib/android-sdk
+          java -version
+
+      - name: Project ကို import လုပ်ခြင်း
+        run: godot --headless --editor --path . --import --quit
 
       - name: Android APK တည်ဆောက်ခြင်း
         run: |
           mkdir -p build/android
-          EXPORT_DIR="$(readlink -f build)"
-          godot --headless --verbose --import \
-            --install-android-build-template \
+          godot --headless --verbose --path . \
             --export-debug "Android" \
-            "$EXPORT_DIR/android/AR-Roadster.apk"
+            build/android/AR-Roadster.apk
 
       - name: APK တင်ခြင်း
         uses: actions/upload-artifact@v4
