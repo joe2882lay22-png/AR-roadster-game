@@ -1,0 +1,31 @@
+name: Android APK (Godot)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-apk:
+    name: APK တည်ဆောက်ခြင်း
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3.0
+
+    steps:
+      - name: Repository ကိုရယူခြင်း
+        uses: actions/checkout@v4
+
+      - name: Android APK တည်ဆောက်ခြင်း
+        run: |
+          mkdir -p build
+          godot --headless --path . --export-debug "Android" build/AR-Roadster.apk
+
+      - name: APK ကို artifact အဖြစ်တင်ခြင်း
+        uses: actions/upload-artifact@v4
+        with:
+          name: AR-Roadster-APK
+          path: build/AR-Roadster.apk
+          if-no-files-found: error
+          retention-days: 14
