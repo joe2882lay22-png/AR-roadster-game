@@ -14,7 +14,6 @@ jobs:
       image: barichello/godot-ci:4.3
 
     env:
-      GODOT_VERSION: "4.3"
       ANDROID_HOME: /usr/lib/android-sdk
       ANDROID_SDK_ROOT: /usr/lib/android-sdk
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
@@ -25,7 +24,22 @@ jobs:
         with:
           lfs: true
 
-      - name: Godot Android export тохиргоог бэлтгэх
+      - name: Android SDK build tools တပ်ဆင်ခြင်း
+        run: |
+          yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses
+          sdkmanager --sdk_root="$ANDROID_HOME" \
+            "platform-tools" \
+            "platforms;android-33" \
+            "build-tools;33.0.2" \
+            "cmdline-tools;latest" \
+            "cmake;3.22.1" \
+            "ndk;25.2.9519653"
+
+          test -d "$ANDROID_HOME/build-tools/33.0.2"
+          test -d "$ANDROID_HOME/platforms/android-33"
+          ls -la "$ANDROID_HOME/build-tools/33.0.2"
+
+      - name: Godot Android export тохиргоо
         run: |
           mkdir -p "$HOME/.config/godot"
           mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
@@ -50,10 +64,6 @@ jobs:
           export/android/debug_keystore_pass = "android"
           EOF
 
-          test -f /root/debug.keystore
-          test -d /usr/lib/android-sdk
-          java -version
-
       - name: Project ကို import လုပ်ခြင်း
         run: godot --headless --editor --path . --import --quit
 
@@ -64,7 +74,7 @@ jobs:
             --export-debug "Android" \
             build/android/AR-Roadster.apk
 
-      - name: APK တင်ခြင်း
+      - name: APK ကိုတင်ခြင်း
         uses: actions/upload-artifact@v4
         with:
           name: AR-Roadster-APK
