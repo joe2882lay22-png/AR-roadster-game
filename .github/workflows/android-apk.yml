@@ -10,6 +10,7 @@ jobs:
   build-apk:
     name: APK တည်ဆောက်ခြင်း
     runs-on: ubuntu-24.04
+
     container:
       image: barichello/godot-ci:4.3
 
@@ -25,9 +26,10 @@ jobs:
         with:
           lfs: true
 
-      - name: Android SDK တပ်ဆင်ခြင်း
+      - name: Android SDK နှင့် Build Tools တပ်ဆင်ခြင်း
         run: |
           yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses || true
+
           sdkmanager --sdk_root="$ANDROID_HOME" \
             "platform-tools" \
             "platforms;android-33" \
@@ -35,11 +37,22 @@ jobs:
             "cmdline-tools;latest" \
             "cmake;3.22.1" \
             "ndk;25.2.9519653"
-          test -x "$ANDROID_HOME/build-tools/33.0.2/aapt"
 
-      - name: Godot Android тохиргоо
+          echo "စစ်ဆေးနေသည်: Android SDK နှင့် Build Tools"
+          test -d "$ANDROID_HOME/platforms/android-33"
+          test -d "$ANDROID_HOME/build-tools/33.0.2"
+          test -f "$ANDROID_HOME/build-tools/33.0.2/source.properties"
+          ls -la "$ANDROID_HOME/build-tools/33.0.2"
+
+      - name: Godot Android export ဆက်တင်ပြင်ဆင်ခြင်း
         run: |
           mkdir -p /root/.config/godot
+          mkdir -p /root/.local/share/godot/export_templates/4.3.stable
+
+          if [ -d /root/.local/share/godot/export_templates/4.3.stable ]; then
+            echo "Godot export template ရှိပါသည်။"
+          fi
+
           cat > /root/.config/godot/editor_settings-4.3.tres <<'EOF'
           [gd_resource type="EditorSettings" format=3]
 
@@ -51,17 +64,21 @@ jobs:
           export/android/debug_keystore_pass = "android"
           EOF
 
-      - name: Project ကိုဖတ်သွင်းခြင်း
+          echo "Godot Android тохиргоо:"
+          cat /root/.config/godot/editor_settings-4.3.tres
+          test -f /root/debug.keystore
+
+      - name: Project файлуудыг уншуулах
         run: godot --headless --editor --path . --import --quit
 
-      - name: Android APK တည်ဆောက်ခြင်း
+      - name: Android APK үүсгэх
         run: |
           mkdir -p build/android
           godot --headless --verbose --path . \
             --export-debug "Android" \
             build/android/AR-Roadster.apk
 
-      - name: APK သိမ်းဆည်းခြင်း
+      - name: APK-г татаж авахад бэлдэх
         uses: actions/upload-artifact@v4
         with:
           name: AR-Roadster-APK
