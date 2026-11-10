@@ -1,4 +1,4 @@
-name: Android APK တည်ဆောက်ခြင်း
+name: Android non-AR APK တည်ဆောက်ခြင်း
 
 on:
   workflow_dispatch:
