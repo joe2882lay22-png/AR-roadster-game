@@ -14,6 +14,7 @@ jobs:
       image: barichello/godot-ci:4.3
 
     env:
+      HOME: /root
       ANDROID_HOME: /usr/lib/android-sdk
       ANDROID_SDK_ROOT: /usr/lib/android-sdk
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
@@ -24,9 +25,9 @@ jobs:
         with:
           lfs: true
 
-      - name: Android SDK build tools စစ်ဆေးတပ်ဆင်ခြင်း
+      - name: Android SDK တပ်ဆင်ခြင်း
         run: |
-          sdkmanager --sdk_root="$ANDROID_HOME" --licenses </dev/null || true
+          yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses || true
           sdkmanager --sdk_root="$ANDROID_HOME" \
             "platform-tools" \
             "platforms;android-33" \
@@ -34,26 +35,12 @@ jobs:
             "cmdline-tools;latest" \
             "cmake;3.22.1" \
             "ndk;25.2.9519653"
-
-          echo "Installed Android build tools:"
-          ls -la "$ANDROID_HOME/build-tools"
           test -x "$ANDROID_HOME/build-tools/33.0.2/aapt"
 
-      - name: Godot Android export тохирခြင်း
+      - name: Godot Android тохиргоо
         run: |
-          mkdir -p "$HOME/.config/godot"
-          mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
-
-          if [ -d /root/.config/godot ]; then
-            cp -a /root/.config/godot/. "$HOME/.config/godot/"
-          fi
-
-          if [ -d /root/.local/share/godot/export_templates/4.3.stable ]; then
-            cp -a /root/.local/share/godot/export_templates/4.3.stable/. \
-              "$HOME/.local/share/godot/export_templates/4.3.stable/"
-          fi
-
-          cat > "$HOME/.config/godot/editor_settings-4.3.tres" <<'EOF'
+          mkdir -p /root/.config/godot
+          cat > /root/.config/godot/editor_settings-4.3.tres <<'EOF'
           [gd_resource type="EditorSettings" format=3]
 
           [resource]
@@ -64,7 +51,7 @@ jobs:
           export/android/debug_keystore_pass = "android"
           EOF
 
-      - name: Project ကို import လုပ်ခြင်း
+      - name: Project ကိုဖတ်သွင်းခြင်း
         run: godot --headless --editor --path . --import --quit
 
       - name: Android APK တည်ဆောက်ခြင်း
@@ -74,7 +61,7 @@ jobs:
             --export-debug "Android" \
             build/android/AR-Roadster.apk
 
-      - name: APK ကိုတင်ခြင်း
+      - name: APK သိမ်းဆည်းခြင်း
         uses: actions/upload-artifact@v4
         with:
           name: AR-Roadster-APK
