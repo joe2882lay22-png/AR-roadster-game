@@ -11,8 +11,7 @@ jobs:
     name: APK တည်ဆောက်ခြင်း
     runs-on: ubuntu-latest
     container:
-      image: barichello/godot-ci:4.3.0
-
+      image: barichello/godot-ci:4.3-stable
     steps:
       - name: Repository ကိုရယူခြင်း
         uses: actions/checkout@v4
