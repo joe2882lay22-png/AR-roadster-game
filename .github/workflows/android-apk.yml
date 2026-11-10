@@ -1,4 +1,4 @@
-name: Android APK (Godot)
+name: Android APK တည်ဆောက်ခြင်း
 
 on:
   workflow_dispatch:
@@ -6,82 +6,39 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
-  build-apk:
-    name: APK တည်ဆောက်ခြင်း
-    runs-on: ubuntu-24.04
-
-    container:
-      image: barichello/godot-ci:4.3
-
-    env:
-      HOME: /root
-      ANDROID_HOME: /usr/lib/android-sdk
-      ANDROID_SDK_ROOT: /usr/lib/android-sdk
-      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+  build:
+    name: Debug APK တည်ဆောက်ခြင်း
+    runs-on: ubuntu-latest
 
     steps:
       - name: Repository ကိုရယူခြင်း
         uses: actions/checkout@v4
+
+      - name: Java 17 ပြင်ဆင်ခြင်း
+        uses: actions/setup-java@v4
         with:
-          lfs: true
+          distribution: temurin
+          java-version: "17"
 
-      - name: Android SDK နှင့် Build Tools တပ်ဆင်ခြင်း
-        run: |
-          yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses || true
+      - name: Android SDK ပြင်ဆင်ခြင်း
+        uses: android-actions/setup-android@v3
 
-          sdkmanager --sdk_root="$ANDROID_HOME" \
-            "platform-tools" \
-            "platforms;android-33" \
-            "build-tools;33.0.2" \
-            "cmdline-tools;latest" \
-            "cmake;3.22.1" \
-            "ndk;25.2.9519653"
+      - name: Gradle 8.7 ပြင်ဆင်ခြင်း
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
 
-          echo "စစ်ဆေးနေသည်: Android SDK နှင့် Build Tools"
-          test -d "$ANDROID_HOME/platforms/android-33"
-          test -d "$ANDROID_HOME/build-tools/33.0.2"
-          test -f "$ANDROID_HOME/build-tools/33.0.2/source.properties"
-          ls -la "$ANDROID_HOME/build-tools/33.0.2"
+      - name: APK တည်ဆောက်ခြင်း
+        run: gradle --no-daemon :app:assembleDebug
 
-      - name: Godot Android export ဆက်တင်ပြင်ဆင်ခြင်း
-        run: |
-          mkdir -p /root/.config/godot
-          mkdir -p /root/.local/share/godot/export_templates/4.3.stable
-
-          if [ -d /root/.local/share/godot/export_templates/4.3.stable ]; then
-            echo "Godot export template ရှိပါသည်။"
-          fi
-
-          cat > /root/.config/godot/editor_settings-4.3.tres <<'EOF'
-          [gd_resource type="EditorSettings" format=3]
-
-          [resource]
-          export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"
-          export/android/android_sdk_path = "/usr/lib/android-sdk"
-          export/android/debug_keystore = "/root/debug.keystore"
-          export/android/debug_keystore_user = "androiddebugkey"
-          export/android/debug_keystore_pass = "android"
-          EOF
-
-          echo "Godot Android тохиргоо:"
-          cat /root/.config/godot/editor_settings-4.3.tres
-          test -f /root/debug.keystore
-
-      - name: Project файлуудыг уншуулах
-        run: godot --headless --editor --path . --import --quit
-
-      - name: Android APK үүсгэх
-        run: |
-          mkdir -p build/android
-          godot --headless --verbose --path . \
-            --export-debug "Android" \
-            build/android/AR-Roadster.apk
-
-      - name: APK-г татаж авахад бэлдэх
+      - name: APK ကိုသိမ်းဆည်းခြင်း
         uses: actions/upload-artifact@v4
         with:
           name: AR-Roadster-APK
-          path: build/android/AR-Roadster.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
