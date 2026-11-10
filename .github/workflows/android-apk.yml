@@ -24,9 +24,9 @@ jobs:
         with:
           lfs: true
 
-      - name: Android SDK build tools တပ်ဆင်ခြင်း
+      - name: Android SDK build tools စစ်ဆေးတပ်ဆင်ခြင်း
         run: |
-          yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses
+          sdkmanager --sdk_root="$ANDROID_HOME" --licenses </dev/null || true
           sdkmanager --sdk_root="$ANDROID_HOME" \
             "platform-tools" \
             "platforms;android-33" \
@@ -35,11 +35,11 @@ jobs:
             "cmake;3.22.1" \
             "ndk;25.2.9519653"
 
-          test -d "$ANDROID_HOME/build-tools/33.0.2"
-          test -d "$ANDROID_HOME/platforms/android-33"
-          ls -la "$ANDROID_HOME/build-tools/33.0.2"
+          echo "Installed Android build tools:"
+          ls -la "$ANDROID_HOME/build-tools"
+          test -x "$ANDROID_HOME/build-tools/33.0.2/aapt"
 
-      - name: Godot Android export тохиргоо
+      - name: Godot Android export тохирခြင်း
         run: |
           mkdir -p "$HOME/.config/godot"
           mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
